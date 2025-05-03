@@ -1,5 +1,34 @@
 # YouTube Thread & LinkedIn Post Generator
 
+---
+
+## ⚠️ 클론 후 필수 초기 설정 안내
+
+- 이 저장소에는 보안 및 빌드 산출물 관련 파일이 포함되어 있지 않습니다.
+- 아래 파일/폴더는 `.gitignore`에 의해 깃허브에 올라가지 않습니다:
+  - 환경 변수 파일: `.env.local` 등 `.env*` 파일
+  - 빌드/캐시 폴더: `.next/`, `node_modules/`, `/out/`, `/build/` 등
+  - 기타: `.DS_Store`, 로그 파일 등
+
+**따라서, 저장소를 클론한 후 반드시 아래 작업을 진행하세요:**
+
+1. **환경 변수 파일 생성**
+   - 프로젝트 루트에 `.env.local` 파일을 만들고 아래와 같이 입력:
+     ```
+     GEMINI_API_KEY=your_google_gemini_api_key
+     ```
+   - (API Key는 [Google AI Studio](https://aistudio.google.com/app/apikey) 등에서 발급)
+
+2. **의존성 설치 및 개발 서버 실행**
+   ```bash
+   pnpm install
+   pnpm dev
+   ```
+
+3. **빌드 폴더(.next 등)는 자동 생성되므로 신경쓰지 않아도 됩니다.**
+
+---
+
 ## 주요 기능
 
 - 유튜브 링크 입력 → 영상 임베딩, 자막 추출
