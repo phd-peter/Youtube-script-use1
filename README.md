@@ -1,17 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YouTube Thread & LinkedIn Post Generator
+
+## 주요 기능
+
+- 유튜브 링크 입력 → 영상 임베딩, 자막 추출
+- Gemini AI로 LinkedIn 스레드/게시글 자동 생성
+- 스레드는 `---SPLIT---` 구분자로 분리, 각 항목별/전체 복사 버튼 제공
+- TailwindCSS 기반 반응형 UI, 접근성 고려
+- 모든 에러는 명확한 메시지로 안내
+
+## 사용법
+
+1. 유튜브 링크 입력 후 **제출**
+2. 자막 확인 및 **스레드/링크드인 게시글 생성** 클릭
+3. 각 결과 옆 **복사** 버튼으로 손쉽게 복사 (복사 시 "복사됨" 안내)
+
+## 환경 변수 설정
+
+- `.env.local` 파일에 아래와 같이 추가:
+  ```
+  GEMINI_API_KEY=your_google_gemini_api_key
+  ```
+
+## 폴더 구조
+
+- `app/page.tsx` : 메인 UI, 입력창, 결과 표시, 복사 기능 등
+- `app/actions/youtube.ts` : 서버 액션(자막 추출, Gemini API 호출)
+- `app/api/youtube-script/route.ts` : API 라우트, 액션 호출 및 응답 처리
+
+## 기술 스택
+
+- Next.js 15, React 19, TypeScript
+- Tailwind CSS (UI 스타일링)
+- LangChain (유튜브 자막 추출)
+- @google/generative-ai (Gemini API)
+- pnpm (패키지 매니저, pnpm-lock.yaml만 유지)
+
+## 개발/운영 안내
+
+- **pnpm만 사용**: `pnpm install`, `pnpm dev`, `pnpm build`
+- `package-lock.json`은 존재하지 않으며, `pnpm-lock.yaml`만 유지됩니다.
+- 팀원 및 CI 환경에서도 pnpm 사용 필수
+- pnpm이 없다면 [공식 설치 가이드](https://pnpm.io/installation) 참고
+
+## 기여 및 확장
+
+- 새로운 기능 추가/확장 시 my-rule(원소스 멀티유즈 구조 및 규칙) 우선 준수
+- UI/UX는 tailwindcss 기반, 반응형/가독성/접근성 고려
+- 에러는 명확한 메시지로 안내
+
+---
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -19,6 +62,19 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+<details>
+<summary>npm/yarn/bun 명령어도 참고용으로 남깁니다 (공식 지원은 pnpm만)</summary>
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+bun dev
+```
+
+</details>
 
 ## Learn More
 

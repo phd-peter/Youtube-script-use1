@@ -1,103 +1,161 @@
-import Image from "next/image";
+"use client";
+import React, { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [thread, setThread] = useState<string | null>(null);
+  const [post, setPost] = useState<string | null>(null);
+  const [postLoading, setPostLoading] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTranscript(null);
+    setError(null);
+    setThread(null);
+    setPost(null);
+    setPostError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/youtube-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: youtubeUrl }),
+      });
+      const data = await res.json();
+      if (res.ok && data.transcript && data.transcript.length > 0) {
+        // docs는 배열이므로, 텍스트만 추출
+        setTranscript(data.transcript.map((doc: any) => doc.pageContent).join("\n\n"));
+      } else {
+        setError(data.error || "자막을 불러올 수 없습니다.");
+      }
+    } catch (err: any) {
+      setError(err.message || "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePost = async () => {
+    setThread(null);
+    setPost(null);
+    setPostError(null);
+    setPostLoading(true);
+    try {
+      const res = await fetch("/api/youtube-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: youtubeUrl, generatePost: true }),
+      });
+      const data = await res.json();
+      if (res.ok && (data.thread || data.post)) {
+        setThread(data.thread || null);
+        setPost(data.post || null);
+      } else {
+        setPostError(data.error || "게시글/스레드를 생성할 수 없습니다.");
+      }
+    } catch (err: any) {
+      setPostError(err.message || "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setPostLoading(false);
+    }
+  };
+
+  const handleCopy = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(type);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      setCopied(null);
+    }
+  };
+
+  // SPLIT 구분자 기준 스레드 분리
+  const splitThread = (thread: string) => thread.split(/---SPLIT---/g).map(s => s.trim()).filter(Boolean);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-8 w-full">
+      <form onSubmit={handleSubmit} className="flex gap-2 w-full max-w-md mb-8">
+        <input
+          type="url"
+          placeholder="유튜브 링크를 입력하세요"
+          value={youtubeUrl}
+          onChange={e => setYoutubeUrl(e.target.value)}
+          className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring"
+          required
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          disabled={loading}
+        >
+          {loading ? "로딩중..." : "제출"}
+        </button>
+      </form>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {transcript && (
+        <div className="w-full max-w-2xl p-4 border rounded bg-gray-50 whitespace-pre-wrap overflow-x-auto mb-4" style={{ maxHeight: 400 }}>
+          {transcript}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      )}
+      {transcript && (
+        <button
+          onClick={handleGeneratePost}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors mb-4"
+          disabled={postLoading}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {postLoading ? "게시글/스레드 생성중..." : "스레드/링크드인 게시글 생성"}
+        </button>
+      )}
+      {postError && <div className="text-red-500 mb-4">{postError}</div>}
+      {thread && (
+        <div className="w-full max-w-2xl p-4 border rounded bg-yellow-50 whitespace-pre-wrap overflow-x-auto mb-4" style={{ maxHeight: 400 }}>
+          <b>생성된 스레드:</b>
+          <div className="flex flex-col gap-2 mt-2">
+            {splitThread(thread).map((t, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="flex-1">{t}</span>
+                <button
+                  onClick={() => handleCopy(t, `thread-${i}`)}
+                  className="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  복사
+                </button>
+                {copied === `thread-${i}` && <span className="text-green-600 text-xs ml-1">복사됨</span>}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => handleCopy(thread, "thread-all")}
+              className="px-3 py-1 text-xs bg-blue-200 rounded hover:bg-blue-300"
+            >
+              전체 복사
+            </button>
+            {copied === "thread-all" && <span className="text-green-600 text-xs ml-2">전체 복사됨</span>}
+          </div>
+        </div>
+      )}
+      {post && (
+        <div className="w-full max-w-2xl p-4 border rounded bg-blue-50 whitespace-pre-wrap overflow-x-auto" style={{ maxHeight: 400 }}>
+          <b>생성된 게시글:</b>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="flex-1">{post}</span>
+            <button
+              onClick={() => handleCopy(post, "post")}
+              className="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
+            >
+              복사
+            </button>
+            {copied === "post" && <span className="text-green-600 text-xs ml-1">복사됨</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
